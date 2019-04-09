@@ -87,7 +87,7 @@ public class GameRecorder {
      * We can't set up the InputSurface yet, because we want the EGL contexts to share stuff,
      * and the primary context may not have been configured yet.
      */
-    public void prepareEncoder(Context context) {
+    public void prepareEncoder(Context context, String filePath ) {
         MediaCodec encoder;
         MediaMuxer muxer;
 

@@ -1,5 +1,6 @@
 package com.fun.app;
 
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -7,6 +8,7 @@ import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.anime.opengl.AnimeSurfaceView;
 import com.fun.anime.Anime;
 import com.fun.anime.AnimeDirector;
 import com.fun.anime.Frame;
@@ -21,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private AnimeDirector animeManager;
-    private SurfaceView surfaceView;
+    private AnimeSurfaceView surfaceView;
     private Anime anime;
 
     @Override
@@ -197,5 +199,11 @@ public class MainActivity extends AppCompatActivity {
 
     private static String getTxt(int index) {
         return texts[index % texts.length];
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        surfaceView.onPause();
     }
 }

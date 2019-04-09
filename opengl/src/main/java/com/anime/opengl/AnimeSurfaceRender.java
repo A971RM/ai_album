@@ -1,10 +1,17 @@
 package com.anime.opengl;
 
 import android.content.Context;
+import android.opengl.EGL14;
+import android.opengl.EGLContext;
+import android.opengl.EGLDisplay;
+import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
+import android.os.ConditionVariable;
+import android.util.Log;
 
+import com.faddensoft.breakout.GameRecorder;
 import com.openglesbook.common.ESShader;
 
 import java.nio.ByteBuffer;
@@ -41,6 +48,17 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         mTexCoordLoc = GLES20.glGetAttribLocation(mProgramObject, "a_texCoord" );
 
         glSetup();
+        // now repeat it for the game recorder
+        GameRecorder recorder = GameRecorder.getInstance();
+        if (recorder.isRecording()) {
+            Log.d(TAG, "configuring GL for recorder");
+            saveRenderState();
+            recorder.firstTimeSetup();
+            recorder.makeCurrent();
+            glSetup();
+            restoreRenderState();
+            mFrameCount = 0;
+        }
     }
 
     @Override
@@ -55,6 +73,22 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         GLES20.glViewport(mViewportXoff, mViewportYoff, mViewportWidth, mViewportHeight);
         drawFrame();
+
+
+        GameRecorder recorder = GameRecorder.getInstance();
+        if (recorder.isRecording() && recordThisFrame()) {
+            saveRenderState();
+
+            // switch to recorder state
+            recorder.makeCurrent();
+            recorder.setViewport();
+
+            // render everything again
+            drawFrame();
+            recorder.swapBuffers();
+
+            restoreRenderState();
+        }
     }
 
     public void drawFrame () {
@@ -87,11 +121,74 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         GLES30.glClearColor ( 1.0f, 1.0f, 1.0f, 1.0f );
     }
 
+    /**
+     * Saves the current projection matrix and EGL state.
+     */
+    private void saveRenderState() {
+        mSavedEglDisplay = EGL14.eglGetCurrentDisplay();
+        mSavedEglDrawSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW);
+        mSavedEglReadSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_READ);
+        mSavedEglContext = EGL14.eglGetCurrentContext();
+    }
+
+    /**
+     * Saves the current projection matrix and EGL state.
+     */
+    private void restoreRenderState() {
+        // switch back to previous state
+        if (!EGL14.eglMakeCurrent(mSavedEglDisplay, mSavedEglDrawSurface, mSavedEglReadSurface,
+                mSavedEglContext)) {
+            throw new RuntimeException("eglMakeCurrent failed");
+        }
+    }
+
+    private boolean recordThisFrame() {
+        final int TARGET_FPS = 30;
+
+        mFrameCount++;
+        switch (TARGET_FPS) {
+            case 60:
+                return true;
+            case 30:
+                return (mFrameCount & 0x01) == 0;
+            case 24:
+                // want 2 out of every 5 frames
+                int mod = mFrameCount % 5;
+                return mod == 0 || mod == 2;
+            default:
+                return true;
+        }
+    }
+
+    /**
+     * Handles pausing of the game Activity.  This is called by the View (via queueEvent) at
+     * pause time.  It tells GameState to save its state.
+     *
+     * @param syncObj Object to notify when we have finished saving state.
+     */
+    public void onViewPause(ConditionVariable syncObj) {
+        /*
+         * We don't explicitly pause the game action, because the main game loop is being driven
+         * by the framework's calls to our onDrawFrame() callback.  If we were driving the updates
+         * ourselves we'd need to do something more.
+         */
+
+        GameRecorder.getInstance().gamePaused();
+
+        syncObj.open();
+    }
+
+    private EGLDisplay mSavedEglDisplay;
+    private EGLSurface mSavedEglDrawSurface;
+    private EGLSurface mSavedEglReadSurface;
+    private EGLContext mSavedEglContext;
     // Size and position of the GL viewport, in screen coordinates.  If the viewport covers the
     // entire screen, the offsets will be zero and the width/height values will match the
     // size of the display.  (This is one of the few places where we deal in actual pixels.)
     private int mViewportWidth, mViewportHeight;
     private int mViewportXoff, mViewportYoff;
+    // Frame counter, used for reducing recorder frame rate.
+    private int mFrameCount;
     private Context mContext;
 
     // GLSL
