@@ -61,42 +61,5 @@ public class AnimeDirector {
 
     }
 
-    /**
-     * 动画播放监听器
-     */
-    public interface OnPlayListener {
 
-        void onStart();
-
-        /**
-         * 播放进度
-         * @param position  当前播放位置(毫秒)
-         * @param duration  总时长(毫秒)
-         */
-        void onProgress(int position, int duration);
-
-        void onStop();
-
-        void onError(int code);
-
-        void onFinish();
-    }
-
-    /**
-     * 动画合成监听器
-     */
-    public interface OnCombineListener {
-
-        void onStart();
-
-        /**
-         * 合成进度
-         * @param progress  百分比0-100
-         */
-        void onProgress(float progress);
-
-        void onFinish();
-
-        void onError(int code);
-    }
 }

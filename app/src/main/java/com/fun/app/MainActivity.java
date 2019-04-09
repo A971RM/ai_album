@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onProgress(int progress) {
+        public void onProgress(int progress, int duration) {
 
         }
 
