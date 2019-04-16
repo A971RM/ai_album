@@ -3,6 +3,8 @@ package com.anime.opengl;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
@@ -97,6 +99,25 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         return retId;
     }
 
+    private int makeTextTexture( String textString) {
+        int retId = -1;
+        // Create an empty, mutable bitmap
+        Bitmap bitmap = Bitmap.createBitmap(mViewportWidth, mViewportHeight, Bitmap.Config.ARGB_8888);
+        // get a canvas to paint over the bitmap
+        Canvas canvas = new Canvas(bitmap);
+        bitmap.eraseColor(0);
+
+        // Draw the text
+        Paint textPaint = new Paint();
+        textPaint.setTextSize(64);
+        textPaint.setAntiAlias(true);
+        textPaint.setARGB(0xff, 0xff, 0xff, 0xff);
+        // draw the text centered
+        canvas.drawText(textString, 16,112, textPaint);
+        retId = loadTexture(bitmap);
+        return retId;
+    }
+
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         // Load shaders from 'assets' and get a linked program object
@@ -111,10 +132,12 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         // Get the sampler locations
         mTexture0Loc = GLES20.glGetUniformLocation ( mProgramObject, "s_texture0" );
         mTexture1Loc = GLES20.glGetUniformLocation ( mProgramObject, "s_texture1" );
+        mTextureTextLoc = GLES20.glGetUniformLocation ( mProgramObject, "s_texturetext" );
 
         // Load the texture
         mTexture0TexId = loadTextureFromAsset ( "textures/basemap.png" );
         mTexture1TexId = loadTextureFromAsset ( "textures/lightmap.png" );
+        mTextureTextTexId = makeTextTexture("Hello world");
 
         glSetup();
         // now repeat it for the game recorder
@@ -188,6 +211,11 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         GLES20.glActiveTexture ( GLES20.GL_TEXTURE1 );
         GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, mTexture1TexId );
         GLES20.glUniform1i ( mTexture1Loc, 1 );
+
+        // Bind the texturetext map
+        GLES20.glActiveTexture ( GLES20.GL_TEXTURE2 );
+        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, mTextureTextTexId );
+        GLES20.glUniform1i ( mTextureTextLoc, 2 );
 
         GLES20.glDrawElements ( GLES20.GL_TRIANGLES, 6, GLES20.GL_UNSIGNED_SHORT, mIndices );
     }
@@ -267,8 +295,8 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
     // Size and position of the GL viewport, in screen coordinates.  If the viewport covers the
     // entire screen, the offsets will be zero and the width/height values will match the
     // size of the display.  (This is one of the few places where we deal in actual pixels.)
-    private int mViewportWidth, mViewportHeight;
-    private int mViewportXoff, mViewportYoff;
+    private int mViewportWidth = 1080, mViewportHeight = 1920;
+    private int mViewportXoff = 0, mViewportYoff = 0;
     // Frame counter, used for reducing recorder frame rate.
     private int mFrameCount;
     private Context mContext;
@@ -305,4 +333,6 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
     private int mTexture1Loc;
     private int mTexture0TexId;
     private int mTexture1TexId;
+    private int mTextureTextLoc;
+    private int mTextureTextTexId;
 }
