@@ -1,6 +1,8 @@
 package com.anime.opengl;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
@@ -8,12 +10,16 @@ import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
+import android.opengl.GLUtils;
 import android.os.ConditionVariable;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.faddensoft.breakout.GameRecorder;
 import com.openglesbook.common.ESShader;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -36,6 +42,61 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         mIndices.put ( mIndicesData ).position ( 0 );
     }
 
+    ///
+    //  Load texture from bitmap
+    //
+    private int loadTexture (Bitmap bitmap)
+    {
+        int[] textureId = new int[1];
+        GLES20.glGenTextures ( 1, textureId, 0 );
+        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, textureId[0] );
+        GLUtils.texImage2D( GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR );
+        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR );
+        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE );
+        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE );
+        return textureId[0];
+    }
+
+    private int loadTexture (String imagePath)
+    {
+        DisplayMetrics dm = mContext.getResources().getDisplayMetrics();
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inDensity = dm.densityDpi;
+        Bitmap bitmap = BitmapFactory.decodeFile(imagePath, opts);
+        int retId = -1;
+        if (bitmap != null) {
+            retId = loadTexture(bitmap);
+            bitmap.recycle();
+        }
+        return retId;
+    }
+
+    ///
+    //  Load texture from asset
+    //
+    private int loadTextureFromAsset ( String fileName )
+    {
+        int retId = -1;
+        Bitmap bitmap;
+        InputStream is;
+        try {
+            is = mContext.getAssets().open ( fileName );
+        } catch ( IOException ioe ) {
+            is = null;
+        }
+
+        if ( is != null ) {
+            bitmap = BitmapFactory.decodeStream(is);
+            if (bitmap != null) {
+                retId = loadTexture(bitmap);
+                bitmap.recycle();
+            }
+        }
+
+        return retId;
+    }
+
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         // Load shaders from 'assets' and get a linked program object
@@ -46,6 +107,14 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         // Get the attribute locations
         mPositionLoc = GLES20.glGetAttribLocation(mProgramObject, "a_position");
         mTexCoordLoc = GLES20.glGetAttribLocation(mProgramObject, "a_texCoord" );
+
+        // Get the sampler locations
+        mTexture0Loc = GLES20.glGetUniformLocation ( mProgramObject, "s_texture0" );
+        mTexture1Loc = GLES20.glGetUniformLocation ( mProgramObject, "s_texture1" );
+
+        // Load the texture
+        mTexture0TexId = loadTextureFromAsset ( "textures/basemap.png" );
+        mTexture1TexId = loadTextureFromAsset ( "textures/lightmap.png" );
 
         glSetup();
         // now repeat it for the game recorder
@@ -111,6 +180,17 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
 
         GLES20.glEnableVertexAttribArray ( mPositionLoc );
         GLES20.glEnableVertexAttribArray ( mTexCoordLoc );
+
+        // Bind the texture0 map
+        GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
+        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, mTexture0TexId );
+        GLES20.glUniform1i ( mTexture0Loc, 0 );
+
+        // Bind the texture1 map
+        GLES20.glActiveTexture ( GLES20.GL_TEXTURE1 );
+        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, mTexture1TexId );
+        GLES20.glUniform1i ( mTexture1Loc, 1 );
+
         GLES20.glDrawElements ( GLES20.GL_TRIANGLES, 6, GLES20.GL_UNSIGNED_SHORT, mIndices );
     }
 
@@ -217,4 +297,10 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
     // Attribute locations
     private int mPositionLoc;
     private int mTexCoordLoc;
+
+    // Texture handle
+    private int mTexture0Loc;
+    private int mTexture1Loc;
+    private int mTexture0TexId;
+    private int mTexture1TexId;
 }
