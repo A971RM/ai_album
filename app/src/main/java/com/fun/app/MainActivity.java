@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         anime.setShowLogo(false);
 
         List<Frame> frames = new ArrayList<>();
-        for(int i=0; i<10; i++) {
+        for(int i=0; i<2; i++) {
             FrameText frameText = new FrameText();
             frameText.setText(getTxt(i));
             frameText.setTextColor("#FFFFFF");
@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
             Frame frame = new Frame();
             frame.setFrameText(frameText);
             frame.setPlayTime(2 * i + 0.2f);
-            frame.setImagePath("");
+            frame.setImagePath(Environment.getExternalStorageDirectory().getPath() + "/ipk/test" + i + ".jpg");
             frame.setType(0);
 
             frames.add(frame);
@@ -133,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
         animeManager.setAnime(anime);
         animeManager.start();
         surfaceView.startRecord();
+        surfaceView.setAnime(anime);
     }
 
     private void doCombine(){

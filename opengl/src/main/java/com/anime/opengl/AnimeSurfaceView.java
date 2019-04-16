@@ -41,8 +41,14 @@ public class AnimeSurfaceView extends GLSurfaceView {
         GameRecorder.getInstance().prepareEncoder(mContext, "");
     }
 
-    public void setAnime(Anime anime) {
+    public void setAnime(final Anime anime) {
         mAnime = anime;
+        queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                mAnimeSurfaceRender.updateAnime(anime);
+            }
+        });
     }
 
     public void startRecord() {

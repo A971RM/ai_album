@@ -18,6 +18,8 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.faddensoft.breakout.GameRecorder;
+import com.fun.anime.Anime;
+import com.fun.anime.Frame;
 import com.openglesbook.common.ESShader;
 
 import java.io.IOException;
@@ -26,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -286,6 +289,22 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
 
     public void onViewRecordStart() {
         GameRecorder.getInstance().startRecording();
+    }
+
+    public void updateAnime(Anime anime) {
+        List<Frame> frames = anime.getFrames();
+        if (frames.size() == 0) {
+            return;
+        }
+        for (int i = 0; i < 2 && i < frames.size(); i ++) {
+            Frame frame = frames.get(i);
+            if (i == 0) {
+                mTexture0TexId = loadTexture(frame.getImagePath());
+            } else {
+                mTexture1TexId = loadTexture(frame.getImagePath());
+            }
+            mTextureTextTexId = makeTextTexture("hello");//frame.getFrameText().toString());
+        }
     }
 
     private EGLDisplay mSavedEglDisplay;
