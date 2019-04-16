@@ -303,7 +303,7 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
             } else {
                 mTexture1TexId = loadTexture(frame.getImagePath());
             }
-            mTextureTextTexId = makeTextTexture("hello");//frame.getFrameText().toString());
+            mTextureTextTexId = makeTextTexture(frame.getFrameText().getText());
         }
     }
 
