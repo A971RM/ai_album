@@ -25,12 +25,7 @@ public class AnimeSurfaceView extends GLSurfaceView {
     public void onPause() {
         super.onPause();
         //Log.d(TAG, "asking renderer to pause");
-        syncObj.close();
-        queueEvent(new Runnable() {
-            @Override public void run() {
-                mAnimeSurfaceRender.onViewPause(syncObj);
-            }});
-        syncObj.block();
+        stopRecord();
     }
 
     @Override
@@ -50,9 +45,29 @@ public class AnimeSurfaceView extends GLSurfaceView {
         mAnime = anime;
     }
 
+    public void startRecord() {
+        if (!mbRecording) {
+            mAnimeSurfaceRender.onViewRecordStart();
+        }
+        mbRecording = true;
+    }
+
+    public void stopRecord() {
+        if (mbRecording) {
+            syncObj.close();
+            queueEvent(new Runnable() {
+                @Override public void run() {
+                    mAnimeSurfaceRender.onViewPause(syncObj);
+                }});
+            syncObj.block();
+        }
+        mbRecording = false;
+    }
+
     private final int CONTEXT_CLIENT_VERSION = 2;
     private AnimeSurfaceRender mAnimeSurfaceRender;
     private Context mContext;
     private Anime mAnime = null;
     private final ConditionVariable syncObj = new ConditionVariable();
+    private boolean mbRecording = false;
 }

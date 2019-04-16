@@ -132,9 +132,11 @@ public class MainActivity extends AppCompatActivity {
         animeManager.setPlayListener(mPlayListener);
         animeManager.setAnime(anime);
         animeManager.start();
+        surfaceView.startRecord();
     }
 
     private void doCombine(){
+        surfaceView.stopRecord();
         animeManager.setCombineListener(new OnCombineListener() {
             @Override
             public void onStart() {

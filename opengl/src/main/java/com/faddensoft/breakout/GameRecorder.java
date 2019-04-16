@@ -53,6 +53,7 @@ public class GameRecorder {
 
     private File mOutputFile;
     private MediaCodec mEncoder;
+    private boolean mIsRecording = false;
     private InputSurface mInputSurface;
     private MediaCodec.BufferInfo mBufferInfo;
     private MediaMuxer mMuxer;
@@ -134,7 +135,7 @@ public class GameRecorder {
      * Finishes setup.  Call with the primary EGL context set.
      */
     public void firstTimeSetup() {
-        if (!isRecording() || mInputSurface != null) {
+        if (mEncoder == null || mInputSurface != null) {
             // not recording, or already initialized
             return;
         }
@@ -177,7 +178,7 @@ public class GameRecorder {
      * Returns true if a recording is in progress.
      */
     public boolean isRecording() {
-        return mEncoder != null;
+        return mIsRecording;
     }
 
     /**
@@ -319,5 +320,12 @@ public class GameRecorder {
 
         drainEncoder(true);
         releaseEncoder();
+        mIsRecording = false;
+    }
+
+    public void startRecording() {
+        if (mEncoder != null) {
+            mIsRecording = true;
+        }
     }
 }

@@ -119,15 +119,13 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         glSetup();
         // now repeat it for the game recorder
         GameRecorder recorder = GameRecorder.getInstance();
-        if (recorder.isRecording()) {
-            Log.d(TAG, "configuring GL for recorder");
-            saveRenderState();
-            recorder.firstTimeSetup();
-            recorder.makeCurrent();
-            glSetup();
-            restoreRenderState();
-            mFrameCount = 0;
-        }
+        Log.d(TAG, "configuring GL for recorder");
+        saveRenderState();
+        recorder.firstTimeSetup();
+        recorder.makeCurrent();
+        glSetup();
+        restoreRenderState();
+        mFrameCount = 0;
     }
 
     @Override
@@ -256,6 +254,10 @@ public class AnimeSurfaceRender implements GLSurfaceView.Renderer {
         GameRecorder.getInstance().gamePaused();
 
         syncObj.open();
+    }
+
+    public void onViewRecordStart() {
+        GameRecorder.getInstance().startRecording();
     }
 
     private EGLDisplay mSavedEglDisplay;
